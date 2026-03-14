@@ -1,6 +1,7 @@
 #include "structures.hpp"
 #include <fstream>
 #include <iomanip>
+#include <algorithm>
 
 // --- TASK 1 IMPLEMENTATION ---
 void SessionQueue::enqueue(Learner l) {
@@ -72,14 +73,41 @@ RiskPriorityQueue::RiskPriorityQueue(int cap) : size(0), capacity(cap) {
     heap = new Learner[capacity];
 }
 
-void RiskPriorityQueue::insert(Learner l) {
-    // Risk calculation based on performance indicators [cite: 45]
-    l.riskScore = (l.failedAttempts * 2.0f) + (100.0f - l.totalScore) / 10.0f;
-    if (l.riskScore > 7) l.recommendation = "Repeat previous topic.";
-    else if (l.riskScore > 4) l.recommendation = "Attempt easier activity.";
+RiskPriorityQueue::~RiskPriorityQueue() {
+    delete[] heap;
+}
 
+bool RiskPriorityQueue::isFull() {
+    return size == capacity;
+}
+
+bool RiskPriorityQueue::isEmpty() {
+    return size == 0;
+}
+
+void RiskPriorityQueue::insert(Learner l) {
+    if (isFull()) {
+        cout << "Error: Risk priority queue is full!" << endl;
+        return;
+    }
+
+    // Calculate learner risk score
+    l.riskScore = (l.failedAttempts * 2.0f) + ((100.0f - l.totalScore) / 10.0f);
+
+    // Recommendation based on risk level
+    if (l.riskScore > 7.0f)
+        l.recommendation = "Repeat previous topic.";
+    else if (l.riskScore > 4.0f)
+        l.recommendation = "Attempt easier activity.";
+    else
+        l.recommendation = "Continue current progress.";
+
+    // Insert at end of heap
     heap[size] = l;
-    int i = size++;
+    int i = size;
+    size++;
+
+    // Heapify up (max-heap by riskScore)
     while (i > 0 && heap[(i - 1) / 2].riskScore < heap[i].riskScore) {
         swap(heap[i], heap[(i - 1) / 2]);
         i = (i - 1) / 2;
@@ -87,10 +115,21 @@ void RiskPriorityQueue::insert(Learner l) {
 }
 
 void RiskPriorityQueue::displayHighRisk() {
+    if (isEmpty()) {
+        cout << "\nNo at-risk learners recorded yet." << endl;
+        return;
+    }
+
     cout << "\n--- At-Risk Learner Priority List ---" << endl;
     for (int i = 0; i < size; i++) {
-        cout << i + 1 << ". " << heap[i].name << " | Risk: " << fixed << setprecision(1) 
-             << heap[i].riskScore << " | Rec: " << heap[i].recommendation << endl;
+        cout << i + 1 << ". "
+             << "ID: " << heap[i].id
+             << " | Name: " << heap[i].name
+             << " | Total Score: " << heap[i].totalScore
+             << " | Failed Attempts: " << heap[i].failedAttempts
+             << " | Risk Score: " << fixed << setprecision(1) << heap[i].riskScore
+             << " | Recommendation: " << heap[i].recommendation
+             << endl;
     }
 }
 
@@ -136,13 +175,18 @@ int main() {
         case 4:
             history.exportToCSV();
             break;
-        case 5:
-            // Simulation of risk data
-            risk.insert({"TP01", "John", 45, 3}); 
+        case 5: {
+            RiskPriorityQueue risk(10);
+
+            risk.insert({"TP01", "John", 45, 3});
             risk.insert({"TP02", "Sarah", 85, 0});
+            risk.insert({"TP03", "Ali", 60, 2});
+            risk.insert({"TP04", "Mei", 30, 4});
+
             risk.displayHighRisk();
             break;
         }
+    }
     } while (choice != 0);
 
     return 0;

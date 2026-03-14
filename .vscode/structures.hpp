@@ -77,6 +77,9 @@ private:
     int size, capacity;
 public:
     RiskPriorityQueue(int cap);
+    ~RiskPriorityQueue();
+    bool isFull();
+    bool isEmpty();
     void insert(Learner l);
     void displayHighRisk();
     void exportRiskCSV();

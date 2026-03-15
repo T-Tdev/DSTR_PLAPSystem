@@ -15,15 +15,16 @@ struct Activity {
 };
 
 struct Learner {
-    string id;
+    string id;              // TP Number
     string name;
+    string intake;          // Intake/Course
     int totalScore = 0;
     int failedAttempts = 0;
     float riskScore = 0.0f;
     string recommendation = "No issues detected.";
 };
 
-// TASK 1: Linear Queue (Linked List)
+// TASK 1: Session Management (Linked List Queue)
 struct QueueNode {
     Learner data;
     QueueNode* next;
@@ -32,17 +33,20 @@ struct QueueNode {
 class SessionQueue {
 private:
     QueueNode *front, *rear;
-    int count, capacity;
+    int count;
+    const int capacity = 50; // Requirement: Max capacity of 50
 public:
-    SessionQueue(int cap) : front(nullptr), rear(nullptr), count(0), capacity(cap) {}
+    SessionQueue();
+    ~SessionQueue();
     bool isFull() { return count >= capacity; }
     bool isEmpty() { return count == 0; }
+    int getCount() { return count; }
     void enqueue(Learner l);
-    void dequeue();
-    void displayAll();
+    bool dequeue(string studentID, string studentName); 
+    bool isStudentEnrolled(string studentID); 
 };
 
-// TASK 2: Stack (Linked List)
+// TASK 2: Activity Navigation (Linked List Stack)
 struct StackNode {
     Activity data;
     StackNode* next;
@@ -58,31 +62,28 @@ public:
     bool isEmpty() { return top == nullptr; }
 };
 
-// TASK 3: Circular Queue (Array-based)
+// TASK 3: Activity Logging (Array-based Circular Queue)
 class CircularLog {
 private:
     Activity* log;
     int head, tail, size, capacity;
 public:
     CircularLog(int cap);
+    ~CircularLog() { delete[] log; }
     void addLog(Activity a);
-    void displayLogs(string filterID = "");
     void exportToCSV();
 };
 
-// TASK 4: Priority Queue (Max-Heap)
+// TASK 4: Risk Prioritization (Max-Heap Priority Queue)
 class RiskPriorityQueue {
 private:
     Learner* heap;
     int size, capacity;
 public:
     RiskPriorityQueue(int cap);
-    ~RiskPriorityQueue();
-    bool isFull();
-    bool isEmpty();
+    ~RiskPriorityQueue() { delete[] heap; }
     void insert(Learner l);
     void displayHighRisk();
-    void exportRiskCSV();
 };
 
 #endif

@@ -1,43 +1,67 @@
 #include "structures.hpp"
 #include <fstream>
 #include <iomanip>
-#include <algorithm>
+
+// --- Constants for Task 1 UI ---
+const string modules[] = { "CCP", "CSLLT", "DSTR", "DMPM", "WAPP" };
+const string days[] = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" };
+const string times[] = { "08:00-10:00", "10:00-12:00", "12:00-14:00", "14:00-16:00", "16:00-18:00" };
 
 // --- TASK 1 IMPLEMENTATION ---
+// This is the "missing" symbol the linker is looking for
+SessionQueue::SessionQueue() : front(nullptr), rear(nullptr), count(0) {
+    // Leave empty or add initialization logic here [cite: 18, 59]
+}
+SessionQueue::~SessionQueue() {
+    QueueNode* curr = front;
+    while (curr != nullptr) {
+        QueueNode* nextNode = curr->next;
+        delete curr;
+        curr = nextNode;
+    }
+}
+
 void SessionQueue::enqueue(Learner l) {
-    if (isFull()) { cout << "Error: Session capacity full!" << endl; return; }
-    QueueNode* newNode = new QueueNode{l, nullptr};
+    if (isFull()) return;
+    QueueNode* newNode = new QueueNode{ l, nullptr };
     if (!rear) front = rear = newNode;
     else { rear->next = newNode; rear = newNode; }
     count++;
 }
 
-void SessionQueue::dequeue() {
-    if (isEmpty()) return;
-    QueueNode* temp = front;
-    front = front->next;
-    if (!front) rear = nullptr;
-    delete temp;
-    count--;
-}
-
-void SessionQueue::displayAll() {
+bool SessionQueue::isStudentEnrolled(string studentID) {
     QueueNode* curr = front;
-    cout << "\n--- Active Session List ---" << endl;
-    while(curr) {
-        cout << "ID: " << curr->data.id << " | Name: " << curr->data.name << endl;
+    while (curr) {
+        if (curr->data.id == studentID) return true;
         curr = curr->next;
     }
+    return false;
 }
 
-// --- TASK 2 IMPLEMENTATION ---
+bool SessionQueue::dequeue(string studentID, string studentName) {
+    if (isEmpty()) return false;
+    QueueNode* curr = front, * prev = nullptr;
+    while (curr != nullptr) {
+        if (curr->data.id == studentID && curr->data.name == studentName) break;
+        prev = curr; curr = curr->next;
+    }
+    if (curr == nullptr) return false;
+    if (prev == nullptr) front = curr->next;
+    else prev->next = curr->next;
+    if (curr == rear) rear = prev;
+    delete curr;
+    count--;
+    return true;
+}
+
+// --- TASK 2 IMPLEMENTATION (Stack) ---
 void ActivityStack::push(Activity a) {
-    StackNode* newNode = new StackNode{a, top};
+    StackNode* newNode = new StackNode{ a, top };
     top = newNode;
 }
 
 Activity ActivityStack::pop() {
-    if (isEmpty()) return {0, "None", "None", 0};
+    if (isEmpty()) return { 0, "None", "None", 0 };
     StackNode* temp = top;
     Activity data = temp->data;
     top = top->next;
@@ -45,7 +69,7 @@ Activity ActivityStack::pop() {
     return data;
 }
 
-// --- TASK 3 IMPLEMENTATION ---
+// --- TASK 3 IMPLEMENTATION (Circular Queue) ---
 CircularLog::CircularLog(int cap) : head(0), tail(0), size(0), capacity(cap) {
     log = new Activity[capacity];
 }
@@ -65,49 +89,22 @@ void CircularLog::exportToCSV() {
         file << log[idx].id << "," << log[idx].topic << "," << log[idx].difficulty << "," << log[idx].score << "\n";
     }
     file.close();
-    cout << "System: Logs exported to activity_logs.csv" << endl;
+    cout << "[System] Logs exported to activity_logs.csv" << endl;
 }
 
-// --- TASK 4 IMPLEMENTATION ---
+// --- TASK 4 IMPLEMENTATION (Priority Queue/Heap) ---
 RiskPriorityQueue::RiskPriorityQueue(int cap) : size(0), capacity(cap) {
     heap = new Learner[capacity];
 }
 
-RiskPriorityQueue::~RiskPriorityQueue() {
-    delete[] heap;
-}
-
-bool RiskPriorityQueue::isFull() {
-    return size == capacity;
-}
-
-bool RiskPriorityQueue::isEmpty() {
-    return size == 0;
-}
-
 void RiskPriorityQueue::insert(Learner l) {
-    if (isFull()) {
-        cout << "Error: Risk priority queue is full!" << endl;
-        return;
-    }
-
-    // Calculate learner risk score
+    if (size >= capacity) return;
+    // Risk Score Calculation 
     l.riskScore = (l.failedAttempts * 2.0f) + ((100.0f - l.totalScore) / 10.0f);
-
-    // Recommendation based on risk level
-    if (l.riskScore > 7.0f)
-        l.recommendation = "Repeat previous topic.";
-    else if (l.riskScore > 4.0f)
-        l.recommendation = "Attempt easier activity.";
-    else
-        l.recommendation = "Continue current progress.";
-
-    // Insert at end of heap
+    l.recommendation = (l.riskScore > 7.0f) ? "Repeat previous topic." : "Continue progress.";
+    
     heap[size] = l;
-    int i = size;
-    size++;
-
-    // Heapify up (max-heap by riskScore)
+    int i = size++;
     while (i > 0 && heap[(i - 1) / 2].riskScore < heap[i].riskScore) {
         swap(heap[i], heap[(i - 1) / 2]);
         i = (i - 1) / 2;
@@ -115,78 +112,118 @@ void RiskPriorityQueue::insert(Learner l) {
 }
 
 void RiskPriorityQueue::displayHighRisk() {
-    if (isEmpty()) {
-        cout << "\nNo at-risk learners recorded yet." << endl;
-        return;
-    }
-
-    cout << "\n--- At-Risk Learner Priority List ---" << endl;
+    cout << "\n--- At-Risk Priority List ---" << endl;
     for (int i = 0; i < size; i++) {
-        cout << i + 1 << ". "
-             << "ID: " << heap[i].id
-             << " | Name: " << heap[i].name
-             << " | Total Score: " << heap[i].totalScore
-             << " | Failed Attempts: " << heap[i].failedAttempts
-             << " | Risk Score: " << fixed << setprecision(1) << heap[i].riskScore
-             << " | Recommendation: " << heap[i].recommendation
-             << endl;
+        cout << i + 1 << ". " << heap[i].id << " | Risk: " << fixed << setprecision(1) << heap[i].riskScore << " | " << heap[i].recommendation << endl;
     }
 }
 
-// --- MAIN UI LOOP ---
+// --- MAIN MENU ---
 int main() {
-    SessionQueue session(5);      // Task 1
-    ActivityStack navigation;     // Task 2
-    CircularLog history(10);      // Task 3
-    RiskPriorityQueue risk(10);   // Task 4
+    SessionQueue schedule[5][5][5]; // Task 1 Storage
+    ActivityStack navigation;       // Task 2 Storage
+    CircularLog history(10);        // Task 3 Storage
+    RiskPriorityQueue risk(10);     // Task 4 Storage
 
     int choice;
     do {
-        cout << "\n==== APU PLAPS PROTOTYPE ====";
-        cout << "\n1. Register & Join Session (Task 1)";
-        cout << "\n2. Move to Next Activity (Task 2)";
-        cout << "\n3. Undo/Backtrack Activity (Task 2)";
-        cout << "\n4. Export Activity Logs (Task 3)";
-        cout << "\n5. View At-Risk Learners (Task 4)";
+        cout << "\n==========================================";
+        cout << "\n    ASIA PACIFIC UNIVERSITY - PLAPS       ";
+        cout << "\n==========================================";
+        cout << "\n1. Register & Join a Learning Session (Task 1)";
+        cout << "\n2. View My Schedule & Quit a Session (Task 1)";
+        cout << "\n3. Activities & Navigation (Task 2 & 3)";
+        cout << "\n4. View At-Risk Recommendations (Task 4)";
         cout << "\n0. Exit System";
-        cout << "\nSelection: ";
-        cin >> choice;
+        cout << "\n------------------------------------------";
+        cout << "\nPlease select an option by number: ";
+
+        if (!(cin >> choice)) {
+            cin.clear(); cin.ignore(100, '\n'); continue;
+        }
 
         switch (choice) {
-        case 1: {
-            Learner l;
-            cout << "Enter Student ID & Name: "; cin >> l.id >> l.name;
-            session.enqueue(l);
-            break;
-        }
-        case 2: {
-            Activity a = {101, "Arrays", "Medium", 65};
-            navigation.push(a);
-            history.addLog(a);
-            cout << "Started Activity: " << a.topic << endl;
-            break;
-        }
-        case 3: {
-            Activity back = navigation.pop();
-            if (back.id != 0) cout << "Backtracked from: " << back.topic << endl;
-            else cout << "No activities to undo." << endl;
-            break;
-        }
-        case 4:
-            history.exportToCSV();
-            break;
-        case 5: {
-            RiskPriorityQueue risk(10);
+        case 1: { // Registration Flow
+            int m, d, t;
+            cout << "\n---- Course Modules ----" << endl;
+            for (int i = 0; i < 5; i++) cout << i + 1 << ". " << modules[i] << endl;
+            cout << "Please select the module by number (1-5): "; cin >> m;
+            if (m < 1 || m > 5) { cout << "[!] No such module, back to main page." << endl; break; }
 
-            risk.insert({"TP01", "John", 45, 3});
-            risk.insert({"TP02", "Sarah", 85, 0});
-            risk.insert({"TP03", "Ali", 60, 2});
-            risk.insert({"TP04", "Mei", 30, 4});
+            cout << "\n---- Available Days ----" << endl;
+            for (int i = 0; i < 5; i++) cout << i + 1 << ". " << days[i] << endl;
+            cout << "Please select the day by number (1-5): "; cin >> d;
+            if (d < 1 || d > 5) { cout << "[!] No such day, back to main page." << endl; break; }
 
+            cout << "\n---- Session Time Slots ----" << endl;
+            for (int i = 0; i < 5; i++) cout << i + 1 << ". " << times[i] << endl;
+            cout << "Please select the time slot by number (1-5): "; cin >> t;
+            if (t < 1 || t > 5) { cout << "[!] No such session, back to main page." << endl; break; }
+
+            if (schedule[m - 1][d - 1][t - 1].isFull()) {
+                cout << "[!] This session is full! Back to main page." << endl;
+            } else {
+                Learner l;
+                cout << "\n---- Learner Registration ----" << endl;
+                cout << "Enter TP Number: "; cin >> l.id;
+                cout << "Enter Full Name: "; cin.ignore(); getline(cin, l.name);
+                cout << "Enter Intake Course: "; getline(cin, l.intake);
+                schedule[m - 1][d - 1][t - 1].enqueue(l);
+                cout << "[System] Successfully registered!" << endl;
+            }
+            break;
+        }
+        case 2: { // View & Quit Flow
+            string sID, sName;
+            cout << "\n---- Verification ----" << endl;
+            cout << "Please enter TP Number: "; cin >> sID;
+            cout << "Please enter Full Name: "; cin.ignore(); getline(cin, sName);
+
+            bool registered[5] = { false };
+            for (int m = 0; m < 5; m++)
+                for (int d = 0; d < 5; d++)
+                    for (int t = 0; t < 5; t++)
+                        if (schedule[m][d][t].isStudentEnrolled(sID)) registered[m] = true;
+
+            cout << "\n---- Registered Modules ----" << endl;
+            for (int i = 0; i < 5; i++) if (registered[i]) cout << i + 1 << ". " << modules[i] << endl;
+            cout << "Select module to view (1-5): ";
+            int mC; cin >> mC;
+            if (mC < 1 || mC > 5 || !registered[mC - 1]) { cout << "[!] Invalid selection. Back to main page." << endl; break; }
+
+            int mIdx = mC - 1;
+            cout << "\n---- Schedule for " << modules[mIdx] << " ----" << endl;
+            cout << left << setw(15) << "Time Slot" << "| Mon | Tue | Wed | Thu | Fri | ID" << endl;
+            for (int t = 0; t < 5; t++) {
+                cout << left << setw(15) << times[t];
+                for (int d = 0; d < 5; d++) cout << (schedule[mIdx][d][t].isStudentEnrolled(sID) ? "| YES " : "|  -  ");
+                cout << "| [" << t + 1 << "]" << endl;
+            }
+
+            cout << "\n1. Quit a Timeslot\n2. Back\nChoice: ";
+            int sub; cin >> sub;
+            if (sub == 1) {
+                int qD, qT;
+                cout << "Select Day (1-5): "; cin >> qD;
+                cout << "Select Time Slot (1-5): "; cin >> qT;
+                if (schedule[mIdx][qD - 1][qT - 1].dequeue(sID, sName)) cout << "[System] Successfully withdrawn." << endl;
+                else cout << "[!] Registration not found." << endl;
+            }
+            break;
+        }
+        case 3: { // Task 2 & 3 Placeholder
+            Activity act = { 101, "Data Structures", "Hard", 85 };
+            navigation.push(act);
+            history.addLog(act);
+            cout << "[Task 2] Activity Added to Stack & [Task 3] Logged." << endl;
+            break;
+        }
+        case 4: { // Task 4 Placeholder
+            risk.insert({ "TP01", "John", "CS", 45, 3 });
             risk.displayHighRisk();
             break;
         }
-    }
+        }
     } while (choice != 0);
 
     return 0;

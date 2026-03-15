@@ -81,9 +81,12 @@ private:
     int size, capacity;
 public:
     RiskPriorityQueue(int cap);
-    ~RiskPriorityQueue() { delete[] heap; }
+    ~RiskPriorityQueue();
+    bool isFull();
+    bool isEmpty();
     void insert(Learner l);
     void displayHighRisk();
+    void exportRiskCSV();
 };
 
 #endif

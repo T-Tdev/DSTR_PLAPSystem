@@ -1,6 +1,7 @@
 #include "structures.hpp"
 #include <fstream>
 #include <iomanip>
+#include <algorithm>
 
 // --- Constants for Task 1 UI ---
 const string modules[] = { "CCP", "CSLLT", "DSTR", "DMPM", "WAPP" };
@@ -92,19 +93,46 @@ void CircularLog::exportToCSV() {
     cout << "[System] Logs exported to activity_logs.csv" << endl;
 }
 
-// --- TASK 4 IMPLEMENTATION (Priority Queue/Heap) ---
+// --- TASK 4 IMPLEMENTATION ---
 RiskPriorityQueue::RiskPriorityQueue(int cap) : size(0), capacity(cap) {
     heap = new Learner[capacity];
 }
 
+RiskPriorityQueue::~RiskPriorityQueue() {
+    delete[] heap;
+}
+
+bool RiskPriorityQueue::isFull() {
+    return size == capacity;
+}
+
+bool RiskPriorityQueue::isEmpty() {
+    return size == 0;
+}
+
 void RiskPriorityQueue::insert(Learner l) {
-    if (size >= capacity) return;
-    // Risk Score Calculation 
+    if (isFull()) {
+        cout << "Error: Risk priority queue is full!" << endl;
+        return;
+    }
+
+    // Calculate learner risk score
     l.riskScore = (l.failedAttempts * 2.0f) + ((100.0f - l.totalScore) / 10.0f);
-    l.recommendation = (l.riskScore > 7.0f) ? "Repeat previous topic." : "Continue progress.";
-    
+
+    // Recommendation based on risk level
+    if (l.riskScore > 7.0f)
+        l.recommendation = "Repeat previous topic.";
+    else if (l.riskScore > 4.0f)
+        l.recommendation = "Attempt easier activity.";
+    else
+        l.recommendation = "Continue current progress.";
+
+    // Insert at end of heap
     heap[size] = l;
-    int i = size++;
+    int i = size;
+    size++;
+
+    // Heapify up (max-heap by riskScore)
     while (i > 0 && heap[(i - 1) / 2].riskScore < heap[i].riskScore) {
         swap(heap[i], heap[(i - 1) / 2]);
         i = (i - 1) / 2;
@@ -112,9 +140,21 @@ void RiskPriorityQueue::insert(Learner l) {
 }
 
 void RiskPriorityQueue::displayHighRisk() {
-    cout << "\n--- At-Risk Priority List ---" << endl;
+    if (isEmpty()) {
+        cout << "\nNo at-risk learners recorded yet." << endl;
+        return;
+    }
+
+    cout << "\n--- At-Risk Learner Priority List ---" << endl;
     for (int i = 0; i < size; i++) {
-        cout << i + 1 << ". " << heap[i].id << " | Risk: " << fixed << setprecision(1) << heap[i].riskScore << " | " << heap[i].recommendation << endl;
+        cout << i + 1 << ". "
+             << "ID: " << heap[i].id
+             << " | Name: " << heap[i].name
+             << " | Total Score: " << heap[i].totalScore
+             << " | Failed Attempts: " << heap[i].failedAttempts
+             << " | Risk Score: " << fixed << setprecision(1) << heap[i].riskScore
+             << " | Recommendation: " << heap[i].recommendation
+             << endl;
     }
 }
 

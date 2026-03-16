@@ -9,6 +9,7 @@ using namespace std;
 // Core Entities
 struct Activity {
     int id;
+    string studentID;   // for task 3 (add to link activty to a another learner)
     string topic;
     string difficulty;
     int score;
@@ -57,6 +58,13 @@ private:
     StackNode* top;
 public:
     ActivityStack() : top(nullptr) {}
+
+        ~ActivityStack() {
+        while (!isEmpty()) {
+            pop();
+        }
+    }
+    
     void push(Activity a);
     Activity pop();
     bool isEmpty() { return top == nullptr; }
@@ -71,6 +79,8 @@ public:
     CircularLog(int cap);
     ~CircularLog() { delete[] log; }
     void addLog(Activity a);
+    void displayAllLogs();                // to view all logs 
+    void displayFilteredLogs(string sID); // filter for specific learner
     void exportToCSV();
 };
 

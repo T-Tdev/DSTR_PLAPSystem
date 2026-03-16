@@ -212,11 +212,57 @@ int main() {
             break;
         }
         case 3: { // Task 2 & 3 Placeholder
-            Activity act = { 101, "Data Structures", "Hard", 85 };
-            navigation.push(act);
-            history.addLog(act);
-            cout << "[Task 2] Activity Added to Stack & [Task 3] Logged." << endl;
-            break;
+            // Activity act = { 101, "Data Structures", "Hard", 85 };
+            // navigation.push(act);
+            // history.addLog(act);
+            // cout << "[Task 2] Activity Added to Stack & [Task 3] Logged." << endl;
+            // break;
+                Activity studyPlan[] = {
+                    {101, "Intro to Data Structures", "Easy", 0},
+                    {102, "Stack & Queue Logic", "Medium", 0},
+                    {103, "Linked List Mastery", "Hard", 0}
+                };
+                static int currentIdx = 0;
+                int actChoice;
+
+                do {
+                    cout << "\n--- Learning Task Manager ---";
+                    if (currentIdx < 3) {
+                        cout << "\nNext Up: " << studyPlan[currentIdx].topic;
+                    } else {
+                        cout << "\nAll activities completed!";
+                    }
+                    cout << "\n1. Move Forward (Complete Activity)";
+                    cout << "\n2. Go Back (Revisit Previous)";
+                    cout << "\n3. Export Logs (Task 3)";
+                    cout << "\n0. Return to Main Menu";
+                    cout << "\nChoice: "; cin >> actChoice;
+
+                    if (actChoice == 1) { // Move Forward
+                        if (currentIdx < 3) {
+                            cout << "Enter score for this topic: ";
+                            cin >> studyPlan[currentIdx].score;
+
+                            navigation.push(studyPlan[currentIdx]);
+
+                            history.addLog(studyPlan[currentIdx]);
+
+                            currentIdx++;
+                            cout << "[System] Moved forward." << endl;
+                        } else cout << "[!] No more activities." << endl;
+                    }
+                    else if (actChoice == 2) { // Go Back / Undo
+                        if (!navigation.isEmpty()) {
+                            Activity prev = navigation.pop();
+                            currentIdx--; 
+                            cout << "[System] Reverting to: " << prev.topic << endl;
+                        } else cout << "[!] Nothing to go back to." << endl;
+                    }
+                    else if (actChoice == 3) {
+                        history.exportToCSV();
+                    }
+                } while (actChoice != 0);
+                break;
         }
         case 4: { // Task 4 Placeholder
             risk.insert({ "TP01", "John", "CS", 45, 3 });

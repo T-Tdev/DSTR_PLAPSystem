@@ -57,6 +57,13 @@ private:
     StackNode* top;
 public:
     ActivityStack() : top(nullptr) {}
+
+        ~ActivityStack() {
+        while (!isEmpty()) {
+            pop();
+        }
+    }
+    
     void push(Activity a);
     Activity pop();
     bool isEmpty() { return top == nullptr; }

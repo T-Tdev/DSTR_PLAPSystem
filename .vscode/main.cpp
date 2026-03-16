@@ -61,7 +61,7 @@ void ActivityStack::push(Activity a) {
 }
 
 Activity ActivityStack::pop() {
-    if (isEmpty()) return { 0, "None", "None", 0 };
+    if (isEmpty()) return { 0, "None", "None", "None", 0 };
     StackNode* temp = top;
     Activity data = temp->data;
     top = top->next;
@@ -76,9 +76,36 @@ CircularLog::CircularLog(int cap) : head(0), tail(0), size(0), capacity(cap) {
 
 void CircularLog::addLog(Activity a) {
     log[tail] = a;
-    tail = (tail + 1) % capacity;
-    if (size < capacity) size++;
-    else head = (head + 1) % capacity; // Overwrite oldest [cite: 38]
+    tail = (tail + 1) % capacity; //moves the tail forward
+
+    if (size < capacity) {
+        size++;
+    } else {
+        head = (head + 1) % capacity; // overwrites oldest record when full 
+    }
+}
+
+void CircularLog::displayAllLogs() {
+    cout << "\n--- All Recent Activity Logs ---" << endl;
+    for (int i = 0; i < size; i++) {
+        int idx = (head + i) % capacity;
+        cout << "Student: " << log[idx].studentID << " | Topic: " << log[idx].topic 
+             << " | Score: " << log[idx].score << endl;
+    }
+}
+
+void CircularLog::displayFilteredLogs(string sID) {
+    cout << "\n--- Activity History for Student: " << sID << " ---" << endl;
+    bool found = false;
+    for (int i = 0; i < size; i++) {
+        int idx = (head + i) % capacity;
+        if (log[idx].studentID == sID) { // Filter logic 
+            cout << "Topic: " << log[idx].topic << " | Difficulty: " << log[idx].difficulty 
+                 << " | Score: " << log[idx].score << endl;
+            found = true;
+        }
+    }
+    if (!found) cout << "No logs found for this student ID." << endl;
 }
 
 void CircularLog::exportToCSV() {
@@ -130,10 +157,10 @@ int main() {
         cout << "\n==========================================";
         cout << "\n    ASIA PACIFIC UNIVERSITY - PLAPS       ";
         cout << "\n==========================================";
-        cout << "\n1. Register & Join a Learning Session (Task 1)";
-        cout << "\n2. View My Schedule & Quit a Session (Task 1)";
-        cout << "\n3. Activities & Navigation (Task 2 & 3)";
-        cout << "\n4. View At-Risk Recommendations (Task 4)";
+        cout << "\n1. Register & Join a Learning Session "; //(Task 1)
+        cout << "\n2. View My Schedule & Quit a Session "; //(Task 1)
+        cout << "\n3. Activities & Navigation "; //(Task 2 & 3)
+        cout << "\n4. View At-Risk Recommendations "; //(Task 4)
         cout << "\n0. Exit System";
         cout << "\n------------------------------------------";
         cout << "\nPlease select an option by number: ";
@@ -211,16 +238,11 @@ int main() {
             }
             break;
         }
-        case 3: { // Task 2 & 3 Placeholder
-            // Activity act = { 101, "Data Structures", "Hard", 85 };
-            // navigation.push(act);
-            // history.addLog(act);
-            // cout << "[Task 2] Activity Added to Stack & [Task 3] Logged." << endl;
-            // break;
+        case 3: { // TASK 2: Navigation & TASK 3: Logging
                 Activity studyPlan[] = {
-                    {101, "Intro to Data Structures", "Easy", 0},
-                    {102, "Stack & Queue Logic", "Medium", 0},
-                    {103, "Linked List Mastery", "Hard", 0}
+                    {101, "", "Intro to Data Structures", "Easy", 0},
+                    {102, "", "Stack & Queue Logic", "Medium", 0},
+                    {103, "", "Linked List Mastery", "Hard", 0}
                 };
                 static int currentIdx = 0;
                 int actChoice;
@@ -232,23 +254,28 @@ int main() {
                     } else {
                         cout << "\nAll activities completed!";
                     }
-                    cout << "\n1. Move Forward (Complete Activity)";
-                    cout << "\n2. Go Back (Revisit Previous)";
-                    cout << "\n3. Export Logs (Task 3)";
+                    cout << "\n1. Move Forward (Complete & Log Activity) "; //[Task 2 & 3]
+                    cout << "\n2. Go Back (Revisit Previous Activity) "; //[Task 2]
+                    cout << "\n3. View All Recent Activity Logs "; //[Task 3]
+                    cout << "\n4. Filter Logs by Learner TP "; //[Task 3]
+                    cout << "\n5. Export Logs to CSV "; //[Task 3]
                     cout << "\n0. Return to Main Menu";
                     cout << "\nChoice: "; cin >> actChoice;
 
                     if (actChoice == 1) { // Move Forward
                         if (currentIdx < 3) {
-                            cout << "Enter score for this topic: ";
+                            // TASK 3: Collect Student ID to link the log 
+                            cout << "Enter Student TP Number: "; 
+                            cin >> studyPlan[currentIdx].studentID;
+
+                            cout << "Enter score for this topic: "; 
                             cin >> studyPlan[currentIdx].score;
 
-                            navigation.push(studyPlan[currentIdx]);
-
-                            history.addLog(studyPlan[currentIdx]);
-
+                            navigation.push(studyPlan[currentIdx]); // Task 2 Stack
+                            history.addLog(studyPlan[currentIdx]);  // Task 3 Circular Queue 
+                            
                             currentIdx++;
-                            cout << "[System] Moved forward." << endl;
+                            cout << "[System] Moved forward and attempt logged." << endl;
                         } else cout << "[!] No more activities." << endl;
                     }
                     else if (actChoice == 2) { // Go Back / Undo
@@ -258,12 +285,25 @@ int main() {
                             cout << "[System] Reverting to: " << prev.topic << endl;
                         } else cout << "[!] Nothing to go back to." << endl;
                     }
-                    else if (actChoice == 3) {
-                        history.exportToCSV();
+                    else if (actChoice == 3) { 
+                        // TASK 3: View all current logs 
+                        history.displayAllLogs(); 
+                    }
+                    else if (actChoice == 4) {
+                        // TASK 3: Filter logic 
+                        string searchTP;
+                        cout << "Enter TP Number to filter: "; 
+                        cin >> searchTP;
+                        history.displayFilteredLogs(searchTP);
+                    }
+                    else if (actChoice == 5) {
+                        // TASK 3: Export
+                        history.exportToCSV(); 
                     }
                 } while (actChoice != 0);
                 break;
         }
+        
         case 4: { // Task 4 Placeholder
             risk.insert({ "TP01", "John", "CS", 45, 3 });
             risk.displayHighRisk();

@@ -1,2 +1,11 @@
 ID,Topic,Difficulty,Score
-101,Intro to Data Structures,Easy,90
+102,Stack & Queue Logic,Medium,20
+103,Linked List Mastery,Hard,30
+101,Intro to Data Structures,Easy,40
+102,Stack & Queue Logic,Medium,50
+103,Linked List Mastery,Hard,60
+101,Intro to Data Structures,Easy,70
+102,Stack & Queue Logic,Medium,80
+103,Linked List Mastery,Hard,90
+101,Intro to Data Structures,Easy,100
+102,Stack & Queue Logic,Medium,50

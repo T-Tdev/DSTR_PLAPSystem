@@ -11,7 +11,7 @@ const string times[] = { "08:00-10:00", "10:00-12:00", "12:00-14:00", "14:00-16:
 // --- TASK 1 IMPLEMENTATION ---
 // This is the "missing" symbol the linker is looking for
 SessionQueue::SessionQueue() : front(nullptr), rear(nullptr), count(0) {
-    // Leave empty or add initialization logic here [cite: 18, 59]
+    // Leave empty or add initialization logic here 
 }
 SessionQueue::~SessionQueue() {
     QueueNode* curr = front;

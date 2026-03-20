@@ -3,7 +3,7 @@
 #include <iomanip>
 #include <algorithm>
 
-// --- Constants for Task 1 UI ---
+// Helper Constants for UI Clarity
 const string modules[] = { "CCP", "CSLLT", "DSTR", "DMPM", "WAPP" };
 const string days[] = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" };
 const string times[] = { "08:00-10:00", "10:00-12:00", "12:00-14:00", "14:00-16:00", "16:00-18:00" };
@@ -11,7 +11,7 @@ const string times[] = { "08:00-10:00", "10:00-12:00", "12:00-14:00", "14:00-16:
 // --- TASK 1 IMPLEMENTATION ---
 // This is the "missing" symbol the linker is looking for
 SessionQueue::SessionQueue() : front(nullptr), rear(nullptr), count(0) {
-    // Leave empty or add initialization logic here 
+    // Leave empty or add initialization logic here [cite: 18, 59]
 }
 SessionQueue::~SessionQueue() {
     QueueNode* curr = front;
@@ -70,43 +70,16 @@ Activity ActivityStack::pop() {
     return data;
 }
 
-// --- TASK 3 IMPLEMENTATION (Circular Queue) ---
+// --- TASK 3 IMPLEMENTATION (Circular Array) ---
 CircularLog::CircularLog(int cap) : head(0), tail(0), size(0), capacity(cap) {
     log = new Activity[capacity];
 }
 
 void CircularLog::addLog(Activity a) {
     log[tail] = a;
-    tail = (tail + 1) % capacity; //moves the tail forward
-
-    if (size < capacity) {
-        size++;
-    } else {
-        head = (head + 1) % capacity; // overwrites oldest record when full 
-    }
-}
-
-void CircularLog::displayAllLogs() {
-    cout << "\n--- All Recent Activity Logs ---" << endl;
-    for (int i = 0; i < size; i++) {
-        int idx = (head + i) % capacity;
-        cout << "Student: " << log[idx].studentID << " | Topic: " << log[idx].topic 
-             << " | Score: " << log[idx].score << endl;
-    }
-}
-
-void CircularLog::displayFilteredLogs(string sID) {
-    cout << "\n--- Activity History for Student: " << sID << " ---" << endl;
-    bool found = false;
-    for (int i = 0; i < size; i++) {
-        int idx = (head + i) % capacity;
-        if (log[idx].studentID == sID) { // Filter logic 
-            cout << "Topic: " << log[idx].topic << " | Difficulty: " << log[idx].difficulty 
-                 << " | Score: " << log[idx].score << endl;
-            found = true;
-        }
-    }
-    if (!found) cout << "No logs found for this student ID." << endl;
+    tail = (tail + 1) % capacity;
+    if (size < capacity) size++;
+    else head = (head + 1) % capacity; // Overwrite oldest [cite: 38]
 }
 
 void CircularLog::exportToCSV() {
@@ -120,7 +93,7 @@ void CircularLog::exportToCSV() {
     cout << "[System] Logs exported to activity_logs.csv" << endl;
 }
 
-// --- TASK 4 IMPLEMENTATION ---
+// --- TASK 4 IMPLEMENTATION (Priority Queue/Heap) ---
 RiskPriorityQueue::RiskPriorityQueue(int cap) : size(0), capacity(cap) {
     heap = new Learner[capacity];
 }
@@ -138,69 +111,45 @@ bool RiskPriorityQueue::isEmpty() {
 }
 
 void RiskPriorityQueue::insert(Learner l) {
-    if (isFull()) {
-        cout << "Error: Risk priority queue is full!" << endl;
-        return;
-    }
-
-    // Calculate learner risk score
+    if (size >= capacity) return;
+    // Risk Score Calculation 
     l.riskScore = (l.failedAttempts * 2.0f) + ((100.0f - l.totalScore) / 10.0f);
-
-    // Recommendation based on risk level
-    if (l.riskScore > 7.0f)
-        l.recommendation = "Repeat previous topic.";
-    else if (l.riskScore > 4.0f)
-        l.recommendation = "Attempt easier activity.";
-    else
-        l.recommendation = "Continue current progress.";
-
-    // Insert at end of heap
+    l.recommendation = (l.riskScore > 7.0f) ? "Repeat previous topic." : "Continue progress.";
+    
     heap[size] = l;
     int i = size;
     size++;
 
     // Heapify up (max-heap by riskScore)
     while (i > 0 && heap[(i - 1) / 2].riskScore < heap[i].riskScore) {
-        swap(heap[i], heap[(i - 1) / 2]);
+        Learner temp = heap[i];
+        heap[i] = heap[(i - 1) / 2];
+        heap[(i - 1) / 2] = temp;
         i = (i - 1) / 2;
     }
 }
 
 void RiskPriorityQueue::displayHighRisk() {
-    if (isEmpty()) {
-        cout << "\nNo at-risk learners recorded yet." << endl;
-        return;
-    }
-
-    cout << "\n--- At-Risk Learner Priority List ---" << endl;
+    cout << "\n--- At-Risk Priority List ---" << endl;
     for (int i = 0; i < size; i++) {
-        cout << i + 1 << ". "
-             << "ID: " << heap[i].id
-             << " | Name: " << heap[i].name
-             << " | Total Score: " << heap[i].totalScore
-             << " | Failed Attempts: " << heap[i].failedAttempts
-             << " | Risk Score: " << fixed << setprecision(1) << heap[i].riskScore
-             << " | Recommendation: " << heap[i].recommendation
-             << endl;
+        cout << i + 1 << ". " << heap[i].id << " | Risk: " << fixed << setprecision(1) << heap[i].riskScore << " | " << heap[i].recommendation << endl;
     }
 }
 
 // --- MAIN MENU ---
 int main() {
-    SessionQueue schedule[5][5][5]; // Task 1 Storage
-    ActivityStack navigation;       // Task 2 Storage
-    CircularLog history(10);        // Task 3 Storage
-    RiskPriorityQueue risk(10);     // Task 4 Storage
+    // 3D Array: 5 Modules x 5 Days x 5 Time Slots [cite: 12]
+    SessionQueue schedule[5][5][5];
 
     int choice;
     do {
         cout << "\n==========================================";
         cout << "\n    ASIA PACIFIC UNIVERSITY - PLAPS       ";
         cout << "\n==========================================";
-        cout << "\n1. Register & Join a Learning Session "; //(Task 1)
-        cout << "\n2. View My Schedule & Quit a Session "; //(Task 1)
-        cout << "\n3. Activities & Navigation "; //(Task 2 & 3)
-        cout << "\n4. View At-Risk Recommendations "; //(Task 4)
+        cout << "\n1. Register & Join a Learning Session (Task 1)";
+        cout << "\n2. View My Schedule & Quit a Session (Task 1)";
+        cout << "\n3. Activities & Navigation (Task 2 & 3)";
+        cout << "\n4. View At-Risk Recommendations (Task 4)";
         cout << "\n0. Exit System";
         cout << "\n------------------------------------------";
         cout << "\nPlease select an option by number: ";
@@ -209,26 +158,25 @@ int main() {
             cin.clear(); cin.ignore(100, '\n'); continue;
         }
 
-        switch (choice) {
-        case 1: { // Registration Flow
+        if (choice == 1) {
             int m, d, t;
             cout << "\n---- Course Modules ----" << endl;
             for (int i = 0; i < 5; i++) cout << i + 1 << ". " << modules[i] << endl;
             cout << "Please select the module by number (1-5): "; cin >> m;
-            if (m < 1 || m > 5) { cout << "[!] No such module, back to main page." << endl; break; }
+            if (m < 1 || m > 5) { cout << "\n[!] There is no such modules/sessions, back to main page." << endl; continue; }
 
             cout << "\n---- Available Days ----" << endl;
             for (int i = 0; i < 5; i++) cout << i + 1 << ". " << days[i] << endl;
             cout << "Please select the day by number (1-5): "; cin >> d;
-            if (d < 1 || d > 5) { cout << "[!] No such day, back to main page." << endl; break; }
+            if (d < 1 || d > 5) { cout << "\n[!] There is no such modules/sessions, back to main page." << endl; continue; }
 
             cout << "\n---- Session Time Slots ----" << endl;
             for (int i = 0; i < 5; i++) cout << i + 1 << ". " << times[i] << endl;
             cout << "Please select the time slot by number (1-5): "; cin >> t;
-            if (t < 1 || t > 5) { cout << "[!] No such session, back to main page." << endl; break; }
+            if (t < 1 || t > 5) { cout << "\n[!] There is no such modules/sessions, back to main page." << endl; continue; }
 
             if (schedule[m - 1][d - 1][t - 1].isFull()) {
-                cout << "[!] This session is full! Back to main page." << endl;
+                cout << "\n[!] Notice: This session is full. Back to main page." << endl; [cite: 23]
             } else {
                 Learner l;
                 cout << "\n---- Learner Registration ----" << endl;
@@ -236,15 +184,14 @@ int main() {
                 cout << "Enter Full Name: "; cin.ignore(); getline(cin, l.name);
                 cout << "Enter Intake Course: "; getline(cin, l.intake);
                 schedule[m - 1][d - 1][t - 1].enqueue(l);
-                cout << "[System] Successfully registered!" << endl;
+                cout << "\n[System] Successfully registered for " << modules[m - 1] << "!" << endl;
             }
-            break;
         }
-        case 2: { // View & Quit Flow
+        else if (choice == 2) {
             string sID, sName;
             cout << "\n---- Verification ----" << endl;
-            cout << "Please enter TP Number: "; cin >> sID;
-            cout << "Please enter Full Name: "; cin.ignore(); getline(cin, sName);
+            cout << "Please enter your TP Number: "; cin >> sID;
+            cout << "Please enter your Full Name: "; cin.ignore(); getline(cin, sName);
 
             bool registered[5] = { false };
             for (int m = 0; m < 5; m++)
@@ -252,11 +199,14 @@ int main() {
                     for (int t = 0; t < 5; t++)
                         if (schedule[m][d][t].isStudentEnrolled(sID)) registered[m] = true;
 
-            cout << "\n---- Registered Modules ----" << endl;
+            cout << "\n---- Your Registered Modules ----" << endl;
             for (int i = 0; i < 5; i++) if (registered[i]) cout << i + 1 << ". " << modules[i] << endl;
-            cout << "Select module to view (1-5): ";
+            
+            cout << "Please select the module by number: ";
             int mC; cin >> mC;
-            if (mC < 1 || mC > 5 || !registered[mC - 1]) { cout << "[!] Invalid selection. Back to main page." << endl; break; }
+            if (mC < 1 || mC > 5 || !registered[mC - 1]) {
+                cout << "\n[!] There is no such modules/sessions, back to main page." << endl; continue;
+            }
 
             int mIdx = mC - 1;
             cout << "\n---- Schedule for " << modules[mIdx] << " ----" << endl;
@@ -267,7 +217,7 @@ int main() {
                 cout << "| [" << t + 1 << "]" << endl;
             }
 
-            cout << "\n1. Quit a Timeslot\n2. Back\nChoice: ";
+            cout << "\n1. Select a Timeslot to Quit\n2. Back to Main Page\nChoice: ";
             int sub; cin >> sub;
             if (sub == 1) {
                 int qD, qT;
@@ -278,72 +228,13 @@ int main() {
             }
             break;
         }
-        case 3: { // TASK 2: Navigation & TASK 3: Logging
-                Activity studyPlan[] = {
-                    {101, "", "Intro to Data Structures", "Easy", 0},
-                    {102, "", "Stack & Queue Logic", "Medium", 0},
-                    {103, "", "Linked List Mastery", "Hard", 0}
-                };
-                static int currentIdx = 0;
-                int actChoice;
-
-                do {
-                    cout << "\n--- Learning Task Manager ---";
-                    if (currentIdx < 3) {
-                        cout << "\nNext Up: " << studyPlan[currentIdx].topic;
-                    } else {
-                        cout << "\nAll activities completed!";
-                    }
-                    cout << "\n1. Move Forward (Complete & Log Activity) "; //[Task 2 & 3]
-                    cout << "\n2. Go Back (Revisit Previous Activity) "; //[Task 2]
-                    cout << "\n3. View All Recent Activity Logs "; //[Task 3]
-                    cout << "\n4. Filter Logs by Learner TP "; //[Task 3]
-                    cout << "\n5. Export Logs to CSV "; //[Task 3]
-                    cout << "\n0. Return to Main Menu";
-                    cout << "\nChoice: "; cin >> actChoice;
-
-                    if (actChoice == 1) { // Move Forward
-                        if (currentIdx < 3) {
-                            // TASK 3: Collect Student ID to link the log 
-                            cout << "Enter Student TP Number: "; 
-                            cin >> studyPlan[currentIdx].studentID;
-
-                            cout << "Enter score for this topic: "; 
-                            cin >> studyPlan[currentIdx].score;
-
-                            navigation.push(studyPlan[currentIdx]); // Task 2 Stack
-                            history.addLog(studyPlan[currentIdx]);  // Task 3 Circular Queue 
-                            
-                            currentIdx++;
-                            cout << "[System] Moved forward and attempt logged." << endl;
-                        } else cout << "[!] No more activities." << endl;
-                    }
-                    else if (actChoice == 2) { // Go Back / Undo
-                        if (!navigation.isEmpty()) {
-                            Activity prev = navigation.pop();
-                            currentIdx--; 
-                            cout << "[System] Reverting to: " << prev.topic << endl;
-                        } else cout << "[!] Nothing to go back to." << endl;
-                    }
-                    else if (actChoice == 3) { 
-                        // TASK 3: View all current logs 
-                        history.displayAllLogs(); 
-                    }
-                    else if (actChoice == 4) {
-                        // TASK 3: Filter logic 
-                        string searchTP;
-                        cout << "Enter TP Number to filter: "; 
-                        cin >> searchTP;
-                        history.displayFilteredLogs(searchTP);
-                    }
-                    else if (actChoice == 5) {
-                        // TASK 3: Export
-                        history.exportToCSV(); 
-                    }
-                } while (actChoice != 0);
-                break;
+        case 3: { // Task 2 & 3 Placeholder
+            Activity act = { 101, "Data Structures", "Hard", 85 };
+            navigation.push(act);
+            history.addLog(act);
+            cout << "[Task 2] Activity Added to Stack & [Task 3] Logged." << endl;
+            break;
         }
-        
         case 4: { // Task 4 Placeholder
             risk.insert({ "TP01", "John", "CS", 45, 3 });
             risk.displayHighRisk();
